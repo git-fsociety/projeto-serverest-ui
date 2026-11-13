@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ServeRest — Interface</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c27;
+    --border: rgba(255,255,255,0.07);
+    --border-hover: rgba(255,255,255,0.14);
+    --text: #f0effe;
+    --muted: #7a7a99;
+    --accent: #7c6dfa;
+    --accent-glow: rgba(124,109,250,0.2);
+    --accent2: #2de0a5;
+    --red: #f05a5a;
+    --amber: #f5a623;
+    --green: #2de0a5;
+    --blue: #58a6e8;
+    --mono: 'DM Mono', monospace;
+    --sans: 'Inter', sans-serif;
+    --display: 'Syne', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* --- Layout --- */
+  .app { display: flex; flex-direction: column; min-height: 100vh; }
+  header { padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 100; }
+  .logo { font-family: var(--display); font-size: 18px; font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px; }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; display: inline-block; }
+  .status-badge { font-family: var(--mono); font-size: 11px; padding: 4px 10px; border-radius: 4px; border: 1px solid; display: flex; align-items: center; gap: 6px; }
+  .status-badge.online { border-color: var(--green); color: var(--green); }
+  .status-badge.offline { border-color: var(--red); color: var(--red); }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  main { display: flex; flex: 1; }
+
+  /* --- Sidebar --- */
+  aside { width: 220px; min-width: 220px; background: var(--surface); border-right: 1px solid var(--border); padding: 1.5rem 0; display: flex; flex-direction: column; gap: 4px; }
+  .nav-section { padding: 0 1rem 0.5rem; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); font-family: var(--mono); margin-top: 1rem; }
+  .nav-section:first-child { margin-top: 0; }
+  .nav-item { margin: 0 0.75rem; padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); transition: all 0.15s; border: 1px solid transparent; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--accent-glow); color: var(--accent); border-color: rgba(124,109,250,0.25); }
+  .method-tag { font-family: var(--mono); font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 500; min-width: 36px; text-align: center; }
+  .method-tag.get { background: rgba(88,166,232,0.15); color: var(--blue); }
+  .method-tag.post { background: rgba(45,224,165,0.15); color: var(--green); }
+  .method-tag.put { background: rgba(245,166,35,0.15); color: var(--amber); }
+  .method-tag.del { background: rgba(240,90,90,0.15); color: var(--red); }
+
+  /* --- Content --- */
+  .content { flex: 1; padding: 2rem; overflow-y: auto; max-width: 900px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  h1 { font-family: var(--display); font-size: 28px; font-weight: 800; letter-spacing: -1px; margin-bottom: 0.4rem; }
+  h2 { font-family: var(--display); font-size: 18px; font-weight: 700; margin-bottom: 1rem; }
+  .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 2rem; }
+
+  /* --- Forms --- */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
+  .form-grid.single { grid-template-columns: 1fr; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-family: var(--mono); }
+  input, select, textarea { background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: var(--sans); font-size: 13px; padding: 9px 12px; border-radius: 6px; outline: none; transition: border 0.15s; width: 100%; }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+  select option { background: var(--surface2); }
+  textarea { resize: vertical; min-height: 80px; font-family: var(--mono); font-size: 12px; }
+
+  /* --- Buttons --- */
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 9px 18px; border-radius: 6px; font-size: 13px; font-family: var(--sans); font-weight: 500; cursor: pointer; border: 1px solid; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-ghost { background: transparent; border-color: var(--border-hover); color: var(--text); }
+  .btn-ghost:hover { background: var(--surface2); border-color: var(--border-hover); }
+  .btn-danger { background: transparent; border-color: rgba(240,90,90,0.4); color: var(--red); }
+  .btn-danger:hover { background: rgba(240,90,90,0.08); }
+  .btn-row { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+
+  /* --- Response Box --- */
+  .response-box { margin-top: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .response-header { padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); font-size: 12px; font-family: var(--mono); }
+  .response-status { padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+  .response-status.s2xx { background: rgba(45,224,165,0.15); color: var(--green); }
+  .response-status.s4xx, .response-status.s5xx { background: rgba(240,90,90,0.15); color: var(--red); }
+  .response-body { padding: 1rem; font-family: var(--mono); font-size: 12px; line-height: 1.7; color: #c9c4ff; white-space: pre-wrap; max-height: 360px; overflow-y: auto; }
+
+  /* --- Token display --- */
+  .token-box { background: var(--surface2); border: 1px solid rgba(124,109,250,0.25); border-radius: 6px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+  .token-text { font-family: var(--mono); font-size: 11px; color: var(--accent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .token-label { font-size: 11px; color: var(--muted); margin-right: 8px; white-space: nowrap; }
+
+  /* --- List items --- */
+  .list-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+  .list-item:hover { border-color: var(--border-hover); }
+  .item-info { display: flex; flex-direction: column; gap: 3px; }
+  .item-title { font-size: 14px; font-weight: 500; }
+  .item-sub { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+  .item-actions { display: flex; gap: 6px; }
+
+  /* --- Section divider --- */
+  .section-sep { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+  /* --- Home stats --- */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 2rem; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .stat-label { font-size: 11px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: 1px; }
+  .stat-value { font-family: var(--display); font-size: 26px; font-weight: 800; margin-top: 4px; }
+  .stat-value.purple { color: var(--accent); }
+  .stat-value.green { color: var(--green); }
+  .stat-value.amber { color: var(--amber); }
+  .stat-value.blue { color: var(--blue); }
+
+  .endpoints-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 1rem; }
+  .endpoint-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.15s; }
+  .endpoint-card:hover { border-color: var(--border-hover); background: var(--surface2); }
+  .endpoint-card .einfo { display: flex; flex-direction: column; gap: 3px; }
+  .endpoint-card .epath { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .endpoint-card .edesc { font-size: 13px; }
+
+  /* --- Loading spinner --- */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; }
+
+  /* --- Scrollbar --- */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<header>
+  <div class="logo">
+    <span class="logo-dot"></span>
+    ServeRest
+  </div>
+  <span class="status-badge offline" id="statusBadge">
+    <span class="status-dot"></span>
+    verificando...
+  </span>
+</header>
+
+<main>
+<aside>
+  <div class="nav-section">Visão Geral</div>
+  <div class="nav-item active" data-panel="home" onclick="showPanel('home',this)">🏠 &nbsp;Início</div>
+
+  <div class="nav-section">Autenticação</div>
+  <div class="nav-item" data-panel="login" onclick="showPanel('login',this)">
+    <span class="method-tag post">POST</span> Login
+  </div>
+
+  <div class="nav-section">Usuários</div>
+  <div class="nav-item" data-panel="usuarios-list" onclick="showPanel('usuarios-list',this)">
+    <span class="method-tag get">GET</span> Listar
+  </div>
+  <div class="nav-item" data-panel="usuarios-create" onclick="showPanel('usuarios-create',this)">
+    <span class="method-tag post">POST</span> Criar
+  </div>
+  <div class="nav-item" data-panel="usuarios-get" onclick="showPanel('usuarios-get',this)">
+    <span class="method-tag get">GET</span> Buscar por ID
+  </div>
+  <div class="nav-item" data-panel="usuarios-edit" onclick="showPanel('usuarios-edit',this)">
+    <span class="method-tag put">PUT</span> Editar
+  </div>
+  <div class="nav-item" data-panel="usuarios-delete" onclick="showPanel('usuarios-delete',this)">
+    <span class="method-tag del">DEL</span> Excluir
+  </div>
+
+  <div class="nav-section">Produtos</div>
+  <div class="nav-item" data-panel="produtos-list" onclick="showPanel('produtos-list',this)">
+    <span class="method-tag get">GET</span> Listar
+  </div>
+  <div class="nav-item" data-panel="produtos-create" onclick="showPanel('produtos-create',this)">
+    <span class="method-tag post">POST</span> Criar
+  </div>
+  <div class="nav-item" data-panel="produtos-get" onclick="showPanel('produtos-get',this)">
+    <span class="method-tag get">GET</span> Buscar por ID
+  </div>
+  <div class="nav-item" data-panel="produtos-edit" onclick="showPanel('produtos-edit',this)">
+    <span class="method-tag put">PUT</span> Editar
+  </div>
+  <div class="nav-item" data-panel="produtos-delete" onclick="showPanel('produtos-delete',this)">
+    <span class="method-tag del">DEL</span> Excluir
+  </div>
+
+  <div class="nav-section">Carrinhos</div>
+  <div class="nav-item" data-panel="carrinhos-list" onclick="showPanel('carrinhos-list',this)">
+    <span class="method-tag get">GET</span> Listar
+  </div>
+  <div class="nav-item" data-panel="carrinhos-create" onclick="showPanel('carrinhos-create',this)">
+    <span class="method-tag post">POST</span> Criar
+  </div>
+  <div class="nav-item" data-panel="carrinhos-get" onclick="showPanel('carrinhos-get',this)">
+    <span class="method-tag get">GET</span> Buscar por ID
+  </div>
+  <div class="nav-item" data-panel="carrinhos-concluir" onclick="showPanel('carrinhos-concluir',this)">
+    <span class="method-tag del">DEL</span> Concluir compra
+  </div>
+  <div class="nav-item" data-panel="carrinhos-cancelar" onclick="showPanel('carrinhos-cancelar',this)">
+    <span class="method-tag del">DEL</span> Cancelar compra
+  </div>
+</aside>
+
+<div class="content">
+
+  <!-- HOME -->
+  <div class="panel active" id="panel-home">
+    <h1>ServeRest API</h1>
+    <p class="subtitle">Interface visual para a API REST de simulação de loja virtual · <a href="https://serverest.dev" target="_blank" style="color:var(--accent)">serverest.dev</a></p>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Base URL</div><div style="font-family:var(--mono);font-size:12px;color:var(--accent);margin-top:6px">serverest.dev</div></div>
+      <div class="stat-card"><div class="stat-label">Endpoints</div><div class="stat-value purple">15</div></div>
+      <div class="stat-card"><div class="stat-label">Recursos</div><div class="stat-value green">4</div></div>
+      <div class="stat-card"><div class="stat-label">Token</div><div id="tokenStatus" style="font-size:12px;color:var(--muted);margin-top:6px;font-family:var(--mono)">não autenticado</div></div>
+    </div>
+
+    <h2>Endpoints disponíveis</h2>
+    <div class="endpoints-list">
+      <div class="endpoint-card" onclick="showPanel('login',document.querySelector('[data-panel=login]'))">
+        <span class="method-tag post">POST</span>
+        <div class="einfo"><div class="edesc">Login</div><div class="epath">/login</div></div>
+      </div>
+      <div class="endpoint-card" onclick="showPanel('usuarios-list',document.querySelector('[data-panel=usuarios-list]'))">
+        <span class="method-tag get">GET</span>
+        <div class="einfo"><div class="edesc">Listar usuários</div><div class="epath">/usuarios</div></div>
+      </div>
+      <div class="endpoint-card" onclick="showPanel('usuarios-create',document.querySelector('[data-panel=usuarios-create]'))">
+        <span class="method-tag post">POST</span>
+        <div class="einfo"><div class="edesc">Criar usuário</div><div class="epath">/usuarios</div></div>
+      </div>
+      <div class="endpoint-card" onclick="showPanel('produtos-list',document.querySelector('[data-panel=produtos-list]'))">
+        <span class="method-tag get">GET</span>
+        <div class="einfo"><div class="edesc">Listar produtos</div><div class="epath">/produtos</div></div>
+      </div>
+      <div class="endpoint-card" onclick="showPanel('produtos-create',document.querySelector('[data-panel=produtos-create]'))">
+        <span class="method-tag post">POST</span>
+        <div class="einfo"><div class="edesc">Criar produto</div><div class="epath">/produtos</div></div>
+      </div>
+      <div class="endpoint-card" onclick="showPanel('carrinhos-list',document.querySelector('[data-panel=carrinhos-list]'))">
+        <span class="method-tag get">GET</span>
+        <div class="einfo"><div class="edesc">Listar carrinhos</div><div class="epath">/carrinhos</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="panel" id="panel-login">
+    <h1>Login</h1>
+    <p class="subtitle">Autentique-se para obter o Bearer token necessário em rotas protegidas.</p>
+    <div class="form-grid single">
+      <div class="field"><label>Email</label><input id="login-email" type="email" placeholder="fulano@qa.com.br" value="fulano@qa.com.br"></div>
+      <div class="field"><label>Senha</label><input id="login-senha" type="password" placeholder="teste" value="teste"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="doLogin()"><span id="login-spinner" style="display:none" class="spinner"></span>Autenticar</button>
+    </div>
+    <div id="login-response"></div>
+  </div>
+
+  <!-- USUARIOS LIST -->
+  <div class="panel" id="panel-usuarios-list">
+    <h1>Listar usuários</h1>
+    <p class="subtitle">Filtre por qualquer campo ou deixe em branco para listar todos.</p>
+    <div class="form-grid">
+      <div class="field"><label>Nome</label><input id="ul-nome" placeholder="fulano"></div>
+      <div class="field"><label>Email</label><input id="ul-email" placeholder="fulano@qa.com.br"></div>
+      <div class="field"><label>Administrador</label>
+        <select id="ul-admin"><option value="">Qualquer</option><option value="true">true</option><option value="false">false</option></select>
+      </div>
+      <div class="field"><label>ID</label><input id="ul-id" placeholder="_id do usuário"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="doGet('usuarios-list')">Buscar</button>
+    </div>
+    <div id="usuarios-list-response"></div>
+  </div>
+
+  <!-- USUARIOS CREATE -->
+  <div class="panel" id="panel-usuarios-create">
+    <h1>Criar usuário</h1>
+    <p class="subtitle">Cadastra um novo usuário. Não é necessário token.</p>
+    <div class="form-grid">
+      <div class="field"><label>Nome</label><input id="uc-nome" placeholder="Fulano Silva"></div>
+      <div class="field"><label>Email</label><input id="uc-email" type="email" placeholder="fulano@example.com"></div>
+      <div class="field"><label>Senha</label><input id="uc-senha" type="password" placeholder="senha123"></div>
+      <div class="field"><label>Administrador</label>
+        <select id="uc-admin"><option value="true">true</option><option value="false">false</option></select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="doPost('usuarios-create')">Criar usuário</button>
+    </div>
+    <div id="usuarios-create-response"></div>
+  </div>
+
+  <!-- USUARIOS GET -->
+  <div class="panel" id="panel-usuarios-get">
+    <h1>Buscar usuário por ID</h1>
+    <p class="subtitle">Retorna um único usuário pelo seu _id.</p>
+    <div class="form-grid single">
+      <div class="field"><label>ID do usuário</label><input id="ug-id" placeholder="_id"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="doGet('usuarios-get')">Buscar</button>
+    </div>
+    <div id="usuarios-get-response"></div>
+  </div>
+
+  <!-- USUARIOS EDIT -->
+  <div class="panel" id="panel-usuarios-edit">
+    <h1>Editar usuário</h1>
+    <p class="subtitle">Atualiza os dados de um usuário. Requer token de admin.</p>
+    <div id="token-warning-ue"></div>
+    <div class="form-grid">
+      <div class="field" style="grid-column:1/-1"><label>ID do usuário</label><input id="ue-id" placeholder="_id"></div>
+      <div class="field"><label>Nome</label><input id="ue-nome" placeholder="Fulano Silva"></div>
+      <div class="field"><label>Email</label><input id="ue-email" type="email" placeholder="fulano@example.com"></div>
+      <div class="field"><label>Senha</label><input id="ue-senha" type="password" placeholder="senha123"></div>
+      <div class="field"><label>Administrador</label>
+        <select id="ue-admin"><option value="true">true</option><option value="false">false</option></select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="doPut('usuarios-edit')">Salvar</button>
+    </div>
+    <div id="usuarios-edit-response"></div>
+  </div>
+
+  <!-- USUARIOS DELETE -->
+  <div class="panel" id="panel-usuarios-delete">
+    <h1>Excluir usuário</h1>
+    <p class="subtitle">Remove um usuário pelo ID. Requer token.</p>
+    <div class="form-grid single">
+      <div class="field"><label>ID do usuário</label><input id="ud-id" placeholder="_id"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-danger" onclick="doDelete('usuarios-delete')">⚠ Excluir</button>
+    </div>
+    <div id="usuarios-delete-response"></div>
+  </div>
+
+  <!-- PRODUTOS LIST -->
+  <div class="panel" id="panel-produtos-list">
+    <h1>Listar produtos</h1>
+    <p class="subtitle">Filtre por qualquer campo ou deixe em branco para listar todos.</p>
+    <div class="form-grid">
+      <div class="field"><label>Nome</label><input id="pl-nome" placeholder="Logitech MX"></div>
+      <div class="field"><label>Preço</label><input id="pl-preco" type="number" placeholder="100"></div>
+      <div class="field"><label>Descrição</label><input id="pl-desc" placeholder="mouse sem fio"></div>
+      <div class="field"><label>Quantidade</label><input id="pl-qtd" type="number" placeholder="50"></div>
+      <div class="field"><label>ID</label><input id="pl-id" placeholder="_id do produto"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="doGet('produtos-list')">Buscar</button>
+    </div>
+    <div id="produtos-list-response"></div>
+  </div>
+
+  <!-- PRODUTOS CREATE -->
+  <div class="panel" id="panel-produtos-create">
+    <h1>Criar produto</h1>
+    <p class="subtitle">Cria um produto. Requer token de admin.</p>
+    <div class="form-grid">
+      <div class="field"><label>Nome</label><input id="pc-nome" placeholder="Mouse Gamer"></div>
+      <div class="field"><label>Preço</label><input id="pc-preco" type="number" placeholder="350"></div>
+      <div class="field"><label>Descrição</label><input id="pc-desc" placeholder="Mouse óptico 1600 DPI"></div>
+      <div class="field"><label>Quantidade</label><input id="pc-qtd" type="number" placeholder="100"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="doPost('produtos-create')">Criar produto</button>
+    </div>
+    <div id="produtos-create-response"></div>
+  </div>
+
+  <!-- PRODUTOS GET -->
+  <div class="panel" id="panel-produtos-get">
+    <h1>Buscar produto por ID</h1>
+    <p class="subtitle">Retorna um único produto pelo seu _id.</p>
+    <div class="form-grid single">
+      <div class="field"><label>ID do produto</label><input id="pg-id" placeholder="_id"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="doGet('produtos-get')">Buscar</button>
+    </div>
+    <div id="produtos-get-response"></div>
+  </div>
+
+  <!-- PRODUTOS EDIT -->
+  <div class="panel" id="panel-produtos-edit">
+    <h1>Editar produto</h1>
+    <p class="subtitle">Atualiza os dados de um produto. Requer token de admin.</p>
+    <div class="form-grid">
+      <div class="field" style="grid-column:1/-1"><label>ID do produto</label><input id="pe-id" placeholder="_id"></div>
+      <div class="field"><label>Nome</label><input id="pe-nome" placeholder="Mouse Gamer"></div>
+      <div class="field"><label>Preço</label><input id="pe-preco" type="number" placeholder="350"></div>
+      <div class="field"><label>Descrição</label><input id="pe-desc" placeholder="Mouse óptico 1600 DPI"></div>
+      <div class="field"><label>Quantidade</label><input id="pe-qtd" type="number" placeholder="100"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="doPut('produtos-edit')">Salvar</button>
+    </div>
+    <div id="produtos-edit-response"></div>
+  </div>
+
+  <!-- PRODUTOS DELETE -->
+  <div class="panel" id="panel-produtos-delete">
+    <h1>Excluir produto</h1>
+    <p class="subtitle">Remove um produto pelo ID. Requer token de admin.</p>
+    <div class="form-grid single">
+      <div class="field"><label>ID do produto</label><input id="pd-id" placeholder="_id"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-danger" onclick="doDelete('produtos-delete')">⚠ Excluir</button>
+    </div>
+    <div id="produtos-delete-response"></div>
+  </div>
+
+  <!-- CARRINHOS LIST -->
+  <div class="panel" id="panel-carrinhos-list">
+    <h1>Listar carrinhos</h1>
+    <p class="subtitle">Filtre por qualquer campo ou deixe em branco para listar todos.</p>
+    <div class="form-grid">
+      <div class="field"><label>ID do usuário</label><input id="cl-idUsuario" placeholder="_id do usuário"></div>
+      <div class="field"><label>ID</label><input id="cl-id" placeholder="_id do carrinho"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="doGet('carrinhos-list')">Buscar</button>
+    </div>
+    <div id="carrinhos-list-response"></div>
+  </div>
+
+  <!-- CARRINHOS CREATE -->
+  <div class="panel" id="panel-carrinhos-create">
+    <h1>Criar carrinho</h1>
+    <p class="subtitle">Cria um carrinho para o usuário autenticado. Requer token.</p>
+    <div class="form-grid single">
+      <div class="field"><label>Produtos (JSON)</label>
+        <textarea id="cc-produtos" placeholder='[{"idProduto": "_id", "quantidade": 1}]'>[{"idProduto": "", "quantidade": 1}]</textarea>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="doPost('carrinhos-create')">Criar carrinho</button>
+    </div>
+    <div id="carrinhos-create-response"></div>
+  </div>
+
+  <!-- CARRINHOS GET -->
+  <div class="panel" id="panel-carrinhos-get">
+    <h1>Buscar carrinho por ID</h1>
+    <p class="subtitle">Retorna um único carrinho pelo seu _id.</p>
+    <div class="form-grid single">
+      <div class="field"><label>ID do carrinho</label><input id="cg-id" placeholder="_id"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="doGet('carrinhos-get')">Buscar</button>
+    </div>
+    <div id="carrinhos-get-response"></div>
+  </div>
+
+  <!-- CARRINHOS CONCLUIR -->
+  <div class="panel" id="panel-carrinhos-concluir">
+    <h1>Concluir compra</h1>
+    <p class="subtitle">Finaliza o carrinho do usuário autenticado, atualizando o estoque. Requer token.</p>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:1rem">O carrinho é identificado automaticamente pelo token. Não há parâmetros adicionais.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="doDelete('carrinhos-concluir')">Concluir compra</button>
+    </div>
+    <div id="carrinhos-concluir-response"></div>
+  </div>
+
+  <!-- CARRINHOS CANCELAR -->
+  <div class="panel" id="panel-carrinhos-cancelar">
+    <h1>Cancelar compra</h1>
+    <p class="subtitle">Cancela o carrinho e devolve os produtos ao estoque. Requer token.</p>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:1rem">O carrinho é identificado automaticamente pelo token. Não há parâmetros adicionais.</p>
+    <div class="btn-row">
+      <button class="btn btn-danger" onclick="doDelete('carrinhos-cancelar')">⚠ Cancelar compra</button>
+    </div>
+    <div id="carrinhos-cancelar-response"></div>
+  </div>
+
+</div><!-- end content -->
+</main>
+</div>
+
+<script>
+const BASE = 'https://serverest.dev';
+let authToken = '';
+
+function showPanel(name, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  if (el) el.classList.add('active');
+}
+
+function getHeaders(auth) {
+  const h = { 'Content-Type': 'application/json' };
+  if (auth && authToken) h['Authorization'] = authToken;
+  return h;
+}
+
+function renderResponse(containerId, status, data) {
+  const cls = status >= 500 ? 's5xx' : status >= 400 ? 's4xx' : 's2xx';
+  const json = JSON.stringify(data, null, 2);
+  document.getElementById(containerId).innerHTML = `
+    <div class="response-box">
+      <div class="response-header">
+        <span style="color:var(--muted)">Resposta</span>
+        <span class="response-status ${cls}">${status}</span>
+      </div>
+      <pre class="response-body">${escHtml(json)}</pre>
+    </div>`;
+}
+
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function setLoading(id, on) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = on ? 'inline-block' : 'none';
+}
+
+async function request(method, url, body, auth) {
+  const opts = { method, headers: getHeaders(auth) };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  let data;
+  try { data = await res.json(); } catch(e) { data = { raw: await res.text() }; }
+  return { status: res.status, data };
+}
+
+// ---- LOGIN ----
+async function doLogin() {
+  setLoading('login-spinner', true);
+  const email = document.getElementById('login-email').value;
+  const senha = document.getElementById('login-senha').value;
+  const { status, data } = await request('POST', `${BASE}/login`, { email, password: senha }, false);
+  setLoading('login-spinner', false);
+  renderResponse('login-response', status, data);
+  if (data.authorization) {
+    authToken = data.authorization;
+    document.getElementById('statusBadge').className = 'status-badge online';
+    document.getElementById('statusBadge').innerHTML = '<span class="status-dot"></span>autenticado';
+    document.getElementById('tokenStatus').textContent = authToken.substring(0, 28) + '…';
+  }
+}
+
+// ---- GET handlers ----
+async function doGet(type) {
+  let url, id;
+  if (type === 'usuarios-list') {
+    const params = new URLSearchParams();
+    const n = document.getElementById('ul-nome').value;
+    const e = document.getElementById('ul-email').value;
+    const a = document.getElementById('ul-admin').value;
+    const i = document.getElementById('ul-id').value;
+    if (n) params.set('nome', n);
+    if (e) params.set('email', e);
+    if (a) params.set('administrador', a);
+    if (i) params.set('_id', i);
+    url = `${BASE}/usuarios?${params}`;
+  } else if (type === 'usuarios-get') {
+    id = document.getElementById('ug-id').value.trim();
+    url = `${BASE}/usuarios/${id}`;
+  } else if (type === 'produtos-list') {
+    const params = new URLSearchParams();
+    const n = document.getElementById('pl-nome').value;
+    const p = document.getElementById('pl-preco').value;
+    const d = document.getElementById('pl-desc').value;
+    const q = document.getElementById('pl-qtd').value;
+    const i = document.getElementById('pl-id').value;
+    if (n) params.set('nome', n);
+    if (p) params.set('preco', p);
+    if (d) params.set('descricao', d);
+    if (q) params.set('quantidade', q);
+    if (i) params.set('_id', i);
+    url = `${BASE}/produtos?${params}`;
+  } else if (type === 'produtos-get') {
+    id = document.getElementById('pg-id').value.trim();
+    url = `${BASE}/produtos/${id}`;
+  } else if (type === 'carrinhos-list') {
+    const params = new URLSearchParams();
+    const u = document.getElementById('cl-idUsuario').value;
+    const i = document.getElementById('cl-id').value;
+    if (u) params.set('idUsuario', u);
+    if (i) params.set('_id', i);
+    url = `${BASE}/carrinhos?${params}`;
+  } else if (type === 'carrinhos-get') {
+    id = document.getElementById('cg-id').value.trim();
+    url = `${BASE}/carrinhos/${id}`;
+  }
+  const { status, data } = await request('GET', url, null, true);
+  renderResponse(type + '-response', status, data);
+}
+
+// ---- POST handlers ----
+async function doPost(type) {
+  let url, body;
+  if (type === 'usuarios-create') {
+    url = `${BASE}/usuarios`;
+    body = {
+      nome: document.getElementById('uc-nome').value,
+      email: document.getElementById('uc-email').value,
+      password: document.getElementById('uc-senha').value,
+      administrador: document.getElementById('uc-admin').value
+    };
+  } else if (type === 'produtos-create') {
+    url = `${BASE}/produtos`;
+    body = {
+      nome: document.getElementById('pc-nome').value,
+      preco: Number(document.getElementById('pc-preco').value),
+      descricao: document.getElementById('pc-desc').value,
+      quantidade: Number(document.getElementById('pc-qtd').value)
+    };
+  } else if (type === 'carrinhos-create') {
+    url = `${BASE}/carrinhos`;
+    let produtos;
+    try { produtos = JSON.parse(document.getElementById('cc-produtos').value); }
+    catch(e) { alert('JSON de produtos inválido'); return; }
+    body = { produtos };
+  }
+  const { status, data } = await request('POST', url, body, true);
+  renderResponse(type + '-response', status, data);
+}
+
+// ---- PUT handlers ----
+async function doPut(type) {
+  let url, body;
+  if (type === 'usuarios-edit') {
+    const id = document.getElementById('ue-id').value.trim();
+    url = `${BASE}/usuarios/${id}`;
+    body = {
+      nome: document.getElementById('ue-nome').value,
+      email: document.getElementById('ue-email').value,
+      password: document.getElementById('ue-senha').value,
+      administrador: document.getElementById('ue-admin').value
+    };
+  } else if (type === 'produtos-edit') {
+    const id = document.getElementById('pe-id').value.trim();
+    url = `${BASE}/produtos/${id}`;
+    body = {
+      nome: document.getElementById('pe-nome').value,
+      preco: Number(document.getElementById('pe-preco').value),
+      descricao: document.getElementById('pe-desc').value,
+      quantidade: Number(document.getElementById('pe-qtd').value)
+    };
+  }
+  const { status, data } = await request('PUT', url, body, true);
+  renderResponse(type + '-response', status, data);
+}
+
+// ---- DELETE handlers ----
+async function doDelete(type) {
+  let url;
+  if (type === 'usuarios-delete') {
+    const id = document.getElementById('ud-id').value.trim();
+    url = `${BASE}/usuarios/${id}`;
+  } else if (type === 'produtos-delete') {
+    const id = document.getElementById('pd-id').value.trim();
+    url = `${BASE}/produtos/${id}`;
+  } else if (type === 'carrinhos-concluir') {
+    url = `${BASE}/carrinhos/concluir-compra`;
+  } else if (type === 'carrinhos-cancelar') {
+    url = `${BASE}/carrinhos/cancelar-compra`;
+  }
+  const { status, data } = await request('DELETE', url, null, true);
+  renderResponse(type + '-response', status, data);
+}
+
+// ---- Status check ----
+async function checkStatus() {
+  try {
+    const res = await fetch(`${BASE}/usuarios?quantidade=1`);
+    if (res.ok || res.status === 200 || res.status === 400) {
+      if (!authToken) {
+        document.getElementById('statusBadge').className = 'status-badge online';
+        document.getElementById('statusBadge').innerHTML = '<span class="status-dot"></span>online';
+      }
+    }
+  } catch(e) {
+    document.getElementById('statusBadge').className = 'status-badge offline';
+    document.getElementById('statusBadge').innerHTML = '<span class="status-dot"></span>offline';
+  }
+}
+
+checkStatus();
+</script>
+</body>
+</html>

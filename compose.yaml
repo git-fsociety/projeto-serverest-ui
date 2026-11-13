@@ -1,0 +1,7 @@
+services:
+  serverest-ui:
+    build: .
+    image: serverest-ui:1.0
+    ports:
+      - "8080:80"
+    restart: unless-stopped
