@@ -1,0 +1,54 @@
+# Nome que aparece na aba "Actions" do GitHub
+name: CI
+
+# Quando a pipeline roda
+on:
+  push:
+    branches: [main]      # a cada push na main
+  pull_request:           # a cada Pull Request
+  workflow_dispatch:      # botão "Run workflow" para rodar manualmente
+
+# O token da pipeline só pode ler o repositório (menor privilégio)
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build e teste da imagem
+    runs-on: ubuntu-latest   # máquina virtual do GitHub que já vem com Docker
+    timeout-minutes: 10
+
+    steps:
+      # 1. Baixa o código do repositório para a máquina
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # 2. Constrói a imagem a partir do Dockerfile
+      - name: Build da imagem
+        run: docker build -t serverest-ui:ci .
+
+      # 3. Sobe o container (opções SEMPRE antes do nome da imagem)
+      - name: Subir container
+        run: docker run -d --name serverest-ui -p 8080:80 serverest-ui:ci
+
+      # 4. Testa se a página responde HTTP 200
+      - name: Smoke test
+        run: |
+          for i in 1 2 3 4 5; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/ || true)
+            if [ "$code" = "200" ]; then
+              echo "OK: página respondeu HTTP 200"
+              exit 0
+            fi
+            echo "Tentativa $i: HTTP $code, aguardando 2s..."
+            sleep 2
+          done
+          echo "ERRO: página não respondeu 200"
+          exit 1
+
+      # 5. Se algo falhou, mostra os logs do container para ajudar no diagnóstico
+      - name: Logs do container
+        if: failure()
+        run: docker logs serverest-ui
